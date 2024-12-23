@@ -16,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import static org.springframework.boot.autoconfigure.security.servlet.PathRequest.toH2Console;
+
 
 @Configuration
 public class SecurityConfig {
@@ -29,9 +31,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf().disable()
+                .headers(headers -> headers.frameOptions().disable()) // For H2 console frames
                 .authorizeHttpRequests(auth -> auth
                         // Authentication
-                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/auth/login", "/favicon.ico", "/error").permitAll()
+                        .requestMatchers(toH2Console()).permitAll()
 
                         // Categories
                         .requestMatchers(HttpMethod.GET, "/categories/**").permitAll() // Public access
@@ -69,8 +73,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated() // All other requests require authentication
                 )
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
+
 
 
     @Bean
